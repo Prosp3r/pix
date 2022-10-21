@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"sync"
+	"time"
 )
 
 //multiple paths to result case
@@ -27,6 +28,7 @@ type Path struct {
 func main() {
 	wg := sync.WaitGroup{}
 	Ch := make(chan Path)
+	// Dn := make(chan string)
 	var Res []Path
 	I := make(map[string]interface{})
 	err := json.Unmarshal([]byte(INPUT), &I)
@@ -34,59 +36,67 @@ func main() {
 		log.Printf("%v", err)
 	}
 
+	var SuccessPath [][]string
+	go func(Res *[]Path) {
+		defer wg.Done()
+		for {
+			select {
+			case Dval := <-Ch:
+				if Dval.Success {
+					*Res = append(*Res, Dval)
+					SuccessPath = append(SuccessPath, Dval.Direction)
+				}
+			}
+		}
+	}(&Res)
+
 	var Tr []string
 	wg.Add(len(I))
 	for i, v := range I {
 		go processPaths(Tr, i, v, &wg, Ch)
 	}
 
-	for x := 0; x < len(I); x++ {
-		Dval := <-Ch
-		Res = append(Res, Dval)
-	}
-
-	if len(Res) > 0 {
-		Countr := 0
-		for _, v := range Res {
-			if v.Success {
-				fmt.Println(v.Direction)
-				Countr++
+	time.Sleep(time.Millisecond * 10)
+	if len(Res) < 1 {
+		fmt.Println("[Sorry]")
+	} else {
+		//find shortest
+		var ShortestIndex int
+		for i, v := range SuccessPath {
+			if i == 0 {
+				ShortestIndex = 0
+			}
+			if len(v) < len(SuccessPath[ShortestIndex]) {
+				ShortestIndex = i
 			}
 		}
-		if Countr < 1 {
-			fmt.Println("[Sorry]")
-		}
+		fmt.Println(SuccessPath[ShortestIndex])
 	}
-
 	wg.Wait()
 }
 
 func processPaths(Tr []string, I string, V interface{}, wg *sync.WaitGroup, Ch chan Path) {
+	Tr = append(Tr, I)
 
 	switch V.(type) {
 	case string:
-		if V == "exit" {
-			Tr = append(Tr, I)
+		if V.(string) == "exit" {
 			Ch <- Path{Direction: Tr, Success: true}
 			wg.Done()
 			return
 		} else {
-			//return sorry wrong path/dead end
-			Tr = append(Tr, "Sorry")
 			Ch <- Path{Direction: Tr, Success: false}
 			wg.Done()
 			return
 		}
 	case map[string]interface{}:
-		Tr = append(Tr, I) //store the node name
-
+		// Tr = append(Tr, I) //store the node name
 		Nmap := V.(map[string]interface{})
+		wg.Add(len(Nmap))
 		for i, v := range Nmap {
-			processPaths(Tr, i, v, wg, Ch)
+			go processPaths(Tr, i, v, wg, Ch)
 		}
 	}
+	wg.Done()
+	return
 }
-
-//map[forward:tiger
-//left:map[forward:map[upstairs:exit] left:dragon]
-//right:map[forward:dead end]]
