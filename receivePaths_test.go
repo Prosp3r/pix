@@ -9,34 +9,39 @@ import (
 	"time"
 )
 
+const (
+	succeed = "\u2713"
+	failed  = "\u2717"
+)
+
 type PathsTest struct {
 	Name  string
 	Input string
 	Want  []string
 }
 
-func (pt PathsTest) TestreceivePaths(t *testing.T) {
+func TestReceivePaths(t *testing.T) {
 
 	var testCases = []PathsTest{
 		{
-			Name:  "Single Input",
-			Input: `{"forward": "exit"}`,
-			Want:  []string{"[forward]"},
-		},
-		{
 			Name:  "No exit path",
 			Input: `{"forward": "tiger", "left": "ogre", "right":"demon"}`,
-			Want:  []string{"[Sorry]"},
+			Want:  []string{"Sorry"},
 		},
 		{
-			Name:  "Single exit",
+			Name:  "Single exit path",
 			Input: `{"forward": "tiger", "left": {"forward": {"upstairs": "exit"}, "left": "dragon"}, "right": {"forward": "dead end"}}`,
-			Want:  []string{"[left forward upstairs]"},
+			Want:  []string{"left forward upstairs"},
 		},
 		{
-			Name:  "Multiple exit points",
+			Name:  "Multiple exit paths",
 			Input: `{"forward": "tiger", "left": {"forward": {"upstairs": "exit"}, "left": "dragon"}, "right": {"forward": "dead end"}, "upstairs": {"forward": {"left": "dead end", "right": {"forward": {"left": "exit"}} }}}`,
-			Want:  []string{"[left forward upstairs]"},
+			Want:  []string{"left forward upstairs"},
+		},
+		{
+			Name:  "Single Input",
+			Input: `{"forward": "exit"}`,
+			Want:  []string{"forward"},
 		},
 	}
 
@@ -61,7 +66,10 @@ func (pt PathsTest) TestreceivePaths(t *testing.T) {
 		got := receivePaths(&Res, Ch)
 		time.Sleep(time.Millisecond * 10)
 		if !reflect.DeepEqual(tc.Want, got) {
-			t.Errorf("Line %q, wanted %v, got %v", tc.Input, tc.Want, got)
+			t.Logf("Testing for %v => wanted %v, got %v -- %s", tc.Name, tc.Want, got, failed)
+		} else {
+
+			t.Logf("Testing for %v => wanted %v, got %v -- %s", tc.Name, tc.Want, got, succeed)
 		}
 	}
 }

@@ -103,5 +103,4 @@ func processPaths(Tr []string, I string, V interface{}, wg *sync.WaitGroup, Ch c
 		}
 	}
 	wg.Done()
-	return
 }
