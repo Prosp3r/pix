@@ -36,43 +36,48 @@ func main() {
 		log.Printf("%v", err)
 	}
 
-	var SuccessPath [][]string
-	go func(Res *[]Path) {
-		defer wg.Done()
-		for {
-			select {
-			case Dval := <-Ch:
-				if Dval.Success {
-					*Res = append(*Res, Dval)
-					SuccessPath = append(SuccessPath, Dval.Direction)
-				}
-			}
-		}
-	}(&Res)
-
 	var Tr []string
 	wg.Add(len(I))
 	for i, v := range I {
 		go processPaths(Tr, i, v, &wg, Ch)
 	}
 
+	SuccessPath := receivePaths(&Res, Ch)
 	time.Sleep(time.Millisecond * 10)
-	if len(Res) < 1 {
-		fmt.Println("[Sorry]")
-	} else {
-		//find shortest
-		var ShortestIndex int
-		for i, v := range SuccessPath {
-			if i == 0 {
-				ShortestIndex = 0
+
+	fmt.Println(SuccessPath)
+	wg.Wait()
+}
+
+func receivePaths(Res *[]Path, Ch chan Path) []string {
+	var SuccessPath [][]string
+	for {
+		select {
+		case Dval := <-Ch:
+			if Dval.Success {
+				*Res = append(*Res, Dval)
+				SuccessPath = append(SuccessPath, Dval.Direction)
 			}
-			if len(v) < len(SuccessPath[ShortestIndex]) {
-				ShortestIndex = i
+		case <-time.After(time.Millisecond * 10):
+			if len(*Res) < 1 {
+				// fmt.Println("[Sorry]")
+				Rez := []string{"Sorry"}
+				return Rez
+			} else {
+				//find shortest
+				var ShortestIndex int
+				for i, v := range SuccessPath {
+					if i == 0 {
+						ShortestIndex = 0
+					}
+					if len(v) < len(SuccessPath[ShortestIndex]) {
+						ShortestIndex = i
+					}
+				}
+				return SuccessPath[ShortestIndex]
 			}
 		}
-		fmt.Println(SuccessPath[ShortestIndex])
 	}
-	wg.Wait()
 }
 
 func processPaths(Tr []string, I string, V interface{}, wg *sync.WaitGroup, Ch chan Path) {
