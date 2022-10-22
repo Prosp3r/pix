@@ -9,11 +9,6 @@ import (
 	"time"
 )
 
-const (
-	succeed = "\u2713"
-	failed  = "\u2717"
-)
-
 type PathsTest struct {
 	Name  string
 	Input string
