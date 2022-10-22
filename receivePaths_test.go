@@ -66,10 +66,10 @@ func TestReceivePaths(t *testing.T) {
 		got := receivePaths(&Res, Ch)
 		time.Sleep(time.Millisecond * 10)
 		if !reflect.DeepEqual(tc.Want, got) {
-			t.Logf("Testing for %v => wanted %v, got %v -- %s", tc.Name, tc.Want, got, failed)
+			t.Logf("Testing for %v => wanted %v, got %v", tc.Name, tc.Want, got)
 		} else {
 
-			t.Logf("Testing for %v => wanted %v, got %v -- %s", tc.Name, tc.Want, got, succeed)
+			t.Logf("Testing for %v => wanted %v, got %v", tc.Name, tc.Want, got)
 		}
 	}
 }
